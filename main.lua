@@ -17,9 +17,13 @@ function copy(obj, seen)
   return res
 end
 
+windowWidth, windowHeight, windowScale = 1280, 720, 4
+
 function love.load(arg)
-  --math.randomseed(os.time())
+  math.randomseed(os.time())
   love.graphics.setDefaultFilter("nearest", "nearest")
+
+  love.window.setMode(windowWidth, windowHeight, {fullscreen=false, vsync=true})
 
   Gamestate.registerEvents()
   Gamestate.switch(start)

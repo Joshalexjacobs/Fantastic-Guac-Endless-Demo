@@ -14,5 +14,7 @@ function start:update(dt)
 end
 
 function start:draw()
+  love.graphics.scale(windowScale, windowScale)
   love.graphics.printf("Press Space", 0, 0, 1000)
+
 end
