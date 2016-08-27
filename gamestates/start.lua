@@ -14,5 +14,5 @@ function start:update(dt)
 end
 
 function start:draw()
-  love.graphics.printf("hello", 0, 0, 1000)
+  love.graphics.printf("Press Space", 0, 0, 1000)
 end
