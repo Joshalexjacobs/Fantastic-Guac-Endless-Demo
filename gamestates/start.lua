@@ -1,20 +1,29 @@
-start = {}
+-- start.lua --
 
-function start:keypressed(key, code)
-  if key == "escape" then love.event.quit()
-  else Gamestate.switch(game) end
+require 'levels/levelsDictionary'
+
+menu = {} -- previously: Gamestate.new()
+
+dictionary = {}
+
+function menu:enter()
+  dictionary = getDictionary()
+
+  -- other
+  loadController()
+  love.window.setMode(windowWidth, windowHeight, {fullscreen=false, vsync=true})
 end
 
-function start:enter()
-
+function menu:update()
+  -- empty for now
 end
 
-function start:update(dt)
-
+function menu:draw()
+    love.graphics.printf("Press Space", 10, 0, 100)
 end
 
-function start:draw()
-  love.graphics.scale(windowScale, windowScale)
-  love.graphics.printf("Press Space", 0, 0, 1000)
-
+function menu:keypressed(key, code)
+    if key == 'space' then
+        Gamestate.switch(game, dictionary[1].name) -- switch to game and send select level name
+    elseif key =='escape' then love.event.quit() end -- if player hits esc then quit
 end
