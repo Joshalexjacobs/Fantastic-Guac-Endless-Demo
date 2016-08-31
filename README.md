@@ -1,3 +1,7 @@
-# Ludum Dare 36
+# Fantastic Guac Endless Demo
 
-Theme: Ancient Technology
+Just a quick demo I whipped up to demonstrate the game's mechanics and gameplay.
+
+This version currently has controller support for the PS4 (Xbox One/360 may work as well, but are untested).
+
+https://thumbs.gfycat.com/ImaginativeHandmadeAgouti-mobile.mp4
