@@ -1,3 +1,3 @@
-# fantastic-guacamole
+# Ludum Dare 36
 
-The Guac that can't be stopped
+Theme: Ancient Technology

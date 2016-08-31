@@ -32,6 +32,7 @@ local pbullet = {
     for j = 1, len do
       if cols[j].other.type == "enemy" or cols[j].other.type == "boss" or cols[j].other.type == "bubble" then
         entity.hit = true
+        cols[j].other.isHit = true
         entity.isDead = true -- destroy bullet
         cols[j].other.hp = cols[j].other.hp - 1 -- decrement other.hp
       elseif cols[j].other.type == "block" or cols[j].other.type == "ground" then
@@ -162,10 +163,10 @@ local function handleBullets(dt, left, viewportWidth, world, bullets)
     newBullet.dx = math.cos(newBullet.actualDir) * newBullet.speed * dt
     newBullet.dy = math.sin(newBullet.actualDir) * newBullet.speed * dt
     if newBullet.isDead == false then
-      newBullet.x, newBullet.y, cols, len = world:move(newBullet, newBullet.x + newBullet.dx, newBullet.y + newBullet.dy, newBullet.filter) -- update world
+      newBullet.x, newBullet.y, bcols, blen = world:move(newBullet, newBullet.x + newBullet.dx, newBullet.y + newBullet.dy, newBullet.filter) -- update world
     end
 
-    newBullet.reaction(newBullet, cols, len)
+    if newBullet.isDead == false then newBullet.reaction(newBullet, bcols, blen) end
 
     if (newBullet.x > left + viewportWidth + newBullet.w) or (newBullet.x < left - newBullet.w) or (newBullet.y < -16) then
       newBullet.isDead = true

@@ -7,7 +7,7 @@ local dictionary = {
         name = "ancient computer",
         playerSkinV = "img/player/matrix playerBIG.png", -- vertical
         playerSkinH = "img/player/matrix proneBIG.png", -- horizontal
-        tilemap = "tiled/at.lua",
+        tilemap = "tiled/at2.lua",
         startPos = 140, -- player's starting position
         bounds = { -- camera boundaries
           levelWidth = 1000, -- 8000
@@ -23,6 +23,18 @@ local dictionary = {
             w = 2000,
             h = 100,
             enemies = {
+              --{name = "cube", count = 0, max = 1, side = "left", x = 200, y = 15, dynamic = false, spawnTimer = 0, spawnTimerMax = 2},
+              --{name = "cube", count = 0, max = 1, side = "left", x = 300, y = 15, dynamic = false, spawnTimer = 0, spawnTimerMax = 2},
+              --{name = "cube", count = 0, max = 1, side = "left", x = 100, y = 15, dynamic = false, spawnTimer = 0, spawnTimerMax = 2},
+              --{name = "cube", count = 0, max = 1, side = "left", x = 400, y = 15, dynamic = false, spawnTimer = 0, spawnTimerMax = 2},
+              {name = "wall", count = 0, max = 1, side = "right", x = -64, y = 0, dynamic = false, spawnTimer = 0, spawnTimerMax = 2},
+              {name = "wall", count = 0, max = 1, side = "left", x = 510, y = 0, dynamic = false, spawnTimer = 0, spawnTimerMax = 2},
+              --{name = "eye", count = 0, max = 1, side = "left", x = 200, y = 50, dynamic = false, spawnTimer = 0, spawnTimerMax = 2},
+              --{name = "ded runner", count = 0, max = 1000, side = "left", x = 200, y = 120, dynamic = true, spawnTimer = 0, spawnTimerMax = 3},
+              --{name = "wall", count = 0, max = 1, side = "right", x = 0, y = 0, dynamic = false, spawnTimer = 0, spawnTimerMax = 2}
+
+
+
               --{name = "runner", count = 0, max = 1000, side = "left", x = 200, y = 120, dynamic = true, spawnTimer = 0, spawnTimerMax = 3},
               --{name = "runner", count = 0, max = 1000, side = "right", x = -200, y = 120, dynamic = true, spawnTimer = 0, spawnTimerMax = 3},
               --{name = "grenade", count = 0, max = 1000, side = "left", x = 400, y = 85, dynamic = false, spawnTimer = 0, spawnTimerMax = 2},

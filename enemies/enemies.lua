@@ -28,6 +28,8 @@ local enemy = {
   direction = nil,
   prevDir = nil,
   isFalling = false,
+  isHit = false,
+  didFlash = 0,
   isDead = false,
   playDead = false,
   timers = {},
@@ -50,7 +52,7 @@ local enemy = {
       end
     end
   end,
-  color = {255, 0, 0, 255}
+  color = {0, 0, 0, 200}
 }
 
 -- Enemy Functions --
@@ -79,8 +81,20 @@ end
 function enemy.draw(newEnemy)
   if newEnemy.spriteSheet == nil then return false end
 
+  if newEnemy.didFlash >= 3 then
+    newEnemy.isHit = false
+    newEnemy.didFlash = 0
+  end
+
+  if newEnemy.isHit then
+    newEnemy.didFlash = newEnemy.didFlash + 1
+    setColor(newEnemy.color)
+  end
+
   newEnemy.animations[newEnemy.curAnim]:draw(newEnemy.spriteSheet, newEnemy.x, newEnemy.y, 0, newEnemy.scale.x, newEnemy.scale.y, newEnemy.scale.offX, newEnemy.scale.offY)
   if newEnemy.specialDraw ~= nil then newEnemy.specialDraw(newEnemy) end
+  setColor({255, 255, 255, 255})
+
 end
 
 -- Create Globals Table --

@@ -12,7 +12,6 @@ require 'other/controller'
 require 'other/timer'
 
 require 'levels/levelsDictionary'
-require 'cflux'
 require 'bullets'
 require 'bubble'
 
@@ -26,17 +25,17 @@ player = require 'player'
 require 'levels/zones'
 require 'levels/levels'
 
-require 'bosses/waterWalker'
-
 local world = bump.newWorld() -- create a world with bump
 
 game = {}
 
 -- Globals: --
-local debug = true
-bossFight = false
-maxFPS = 60
 endLevel = false
+
+gameTimer = {
+  time = 0,
+  lastEvent = 0
+}
 
 -- Camera boundaries
 local bounds = {
@@ -74,8 +73,8 @@ local leftWall = {
 local fade = {
   x = 0,
   y = 0,
-  w = 320,
-  h = 180,
+  w = 384,
+  h = 216, -- 180
   speed = 180,
   transparency = 255,
   volume = 0,
@@ -111,9 +110,6 @@ local levelFunctions = {}
 
 --function game:enter(menu, levelName, res)
 function game:enter(menu, levelName)
-
-  --windowWidth, windowHeight, windowScale = res.w, res.h, res.s
-
   tutMusic = love.audio.newSource("music/matrix.wav", stream)
 
   -- adjust window
@@ -147,9 +143,6 @@ function game:enter(menu, levelName)
   -- set level bounds
   bounds = level.bounds
 
-  -- adjust window
-  --love.window.setMode(windowWidth, windowHeight, {fullscreen=false, vsync=true})
-
   -- load player
   player.x = startPos -- set player starting position
   loadPlayer(world, pSkinV, pSkinH) -- load player and player sprites
@@ -165,18 +158,44 @@ function game:enter(menu, levelName)
     anim8.newAnimation(gui.livesGrid(2, 1), 0.1), -- 2 tutorial lives
   }
 
-  if level.name == "tutorial" then gui.livesCurAnim = 2 end
-
   -- load camera
-  camera = Camera(math.floor( player.x + 20 + (160 * (windowScale - 1)) ), math.floor( 90 * windowScale ), 1, 0)
+  camera = Camera(math.floor( player.x + 20 + (193 * (windowScale - 1)) ), math.floor( 90 * windowScale ), 1, 0)
   camera.smoother = Camera.smooth.damped(3)
 end
 
+function game:timerEvents()
+  if gameTimer.time >= 5 and gameTimer.lastEvent < 5 then
+    addEnemy("cube", 200, 15, "right", world)
+    gameTimer.lastEvent = 5
+  elseif gameTimer.time >= 10 and gameTimer.lastEvent < 10 then
+    addEnemy("cube", 100, 15, "right", world)
+    addEnemy("cube", 300, 15, "right", world)
+    gameTimer.lastEvent = 10
+  elseif gameTimer.time >= 21 and gameTimer.lastEvent < 21 then
+    addEnemy("cube", 100, 15, "right", world)
+    addEnemy("cube", 200, 15, "right", world)
+    addEnemy("cube", 300, 15, "right", world)
+    gameTimer.lastEvent = 25
+  elseif gameTimer.time >= 35 and gameTimer.lastEvent < 35 then
+    addEnemy("cube", 100, 15, "right", world)
+    addEnemy("cube", 200, 15, "right", world)
+    addEnemy("cube", 300, 15, "right", world)
+    gameTimer.lastEvent = 35
+  elseif gameTimer.time >= 45 and gameTimer.lastEvent < 45 then
+    addEnemy("cube", 150, 15, "right", world)
+    addEnemy("cube", 200, 15, "right", world)
+    addEnemy("cube", 250, 15, "right", world)
+    addEnemy("cube", 300, 15, "right", world)
+    gameTimer.lastEvent = 45
+  end -- 60
+end
 
 function game:update(dt)
-  if tutMusic:isPlaying() == false then
-    love.audio.play(tutMusic)
-  end
+  gameTimer.time = gameTimer.time + dt
+  game:timerEvents()
+  --if tutMusic:isPlaying() == false then
+    --love.audio.play(tutMusic)
+  --end
 
   if endLevel == false then
     fade.fadeIn(dt, fade, tutMusic)
@@ -184,15 +203,14 @@ function game:update(dt)
     fade.fadeOut(dt, fade, tutMusic)
   end
 
-  -- not sure if this is really changing anything
-  --dt = math.min(dt, 1/maxFPS)
-
   -- if player wants to quit
-  if love.keyboard.isDown('escape') then love.event.quit() end -- if player hits esc then quit
+  if love.keyboard.isDown('escape') or pressStart() then
+    love.event.quit()
+  end -- if player hits esc then quit
 
   -- update bounds
   local left, right = camera:position()
-  bounds.left = left - ((180 * windowScale) - (20 * windowScale))
+  bounds.left = left - ((216 * windowScale/1.2) - (20 * windowScale/1.2))
 
   leftWall.x = bounds.left
   world:move(leftWall, leftWall.x, leftWall.y, leftWall.filter)
@@ -203,41 +221,53 @@ function game:update(dt)
   -- update everything
   updatePlayer(dt, world)
 
-  updateBullets(dt, bounds.left, 320, world)
+  updateBullets(dt, bounds.left, 386, world)
   updateBubbles(dt, world)
 
   updateEnemies(dt, world)
   updateZones(player.x, player.w, bounds.left, world, dt)
 
-  --if bossFight then -- if player activated boss fight, update boss
-    --waterWalker:update(dt, world)
-  --end
-
   -- update gui
   -- gui.livesAnimations[gui.livesCurAnim]:update(dt)
 
   --camera:lockPosition(math.floor(player.x + 20 + (160 * (windowScale - 1))), math.floor(90 * windowScale))
-  camera:lockX(math.floor(player.x + 20 + (160 * (windowScale - 1))))
+
+  if player.lastDir == 1 then -- 193 is obtained by doing screenWidth (in pixels) / 2 = 193
+    camera:lockX(math.floor(player.x + 20 + (193 * (windowScale / 1.2 - 1))) + 25 )
+    camera:lockY(360)
+  else
+    camera:lockX(math.floor(player.x + 20 + (193 * (windowScale / 1.2 - 1))) - 25 )
+    camera:lockY(360)
+  end
 end
 
 function game:keyreleased(key, code)
-  if key == 'n' then
+  if key == 'n' and pressX() == false then
     player.jumpLock = false
-  elseif key == 'm' then
+  elseif key == 'm' or pressCircle() == false then
+    player.shootLock = false
+  end
+end
+
+function game:gamepadreleased( joystick, button )
+  if button == 'a' then
+    player.jumpLock = false
+  elseif button == 'b' then
     player.shootLock = false
   end
 end
 
 function game:draw()
-  love.graphics.scale(windowScale, windowScale)
+  love.graphics.setBackgroundColor(100, 100, 100)
+
+  love.graphics.scale(windowScale / 1.2 , windowScale / 1.2)
 
   --[[ IF YOU DEACTIVATE CAMERA AND UNCOMMENT THESE LINES, THE TILED SEAM PROBLEM GOES AWAY ]]
   --local tx = math.floor(player.x - 90)
-
   --love.graphics.translate(-tx, 0)
 
   camera:attach()
-    map:setDrawRange(math.floor(bounds.left), 0, 320, 180)
+    map:setDrawRange(math.floor(bounds.left), 0, 386, 216)
     map:draw()
 
     -- run level specific draw
@@ -247,10 +277,6 @@ function game:draw()
     drawEnemies()
     drawBullets()
     drawBubbles()
-
-    --if bossFight then -- if player activated boss fight, update boss
-      --waterWalker:draw()
-    --end
 
     --drawZones()
 
@@ -268,11 +294,13 @@ function game:draw()
 
   setColor({255, 255, 255, 255})
 
-  --if bossFight then
-    --waterWalker:drawHealth()
-  --end
-
   love.graphics.print(tostring(love.timer.getFPS( )), 0.2, 0.2, 0, 0.35, 0.35) -- print fps in the top left corner of the screen
+
+  local minute = math.floor(gameTimer.time / 59)
+  local seconds = gameTimer.time % 59
+  local displayTime = string.format("%02d:%02d", minute, seconds)
+
+  love.graphics.print(displayTime, 190, 0.2, 0, 0.35, 0.35)
 
   -- draw fade
   fade.draw(fade)

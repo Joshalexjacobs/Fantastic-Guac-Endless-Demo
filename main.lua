@@ -41,6 +41,10 @@ function copy(obj, seen)
   return res
 end
 
+function setColor(r, g, b, a)
+  love.graphics.setColor(r, g, b, a)
+end
+
 function love.run() --delete default love.run
 end
 

@@ -30,7 +30,7 @@ local player = {
   animations = {},
   curAnim = 1,
   timers = {},
-  shootTimerMax = 0.17, -- 0.17
+  shootTimerMax = 0.13, -- 0.07
   bulletsMax = 4,
   upgrade = nil,
   filter = function(item, other)
@@ -161,16 +161,16 @@ local gravity, damping, maxVel, decel = 9.8, 0.5, 6.0, 8
 local function playerInput(dt, world)
 
   -- left/right movement
-  if love.keyboard.isDown("d") or dPadRight() and player.isDead == false then
+  if love.keyboard.isDown("d") and player.isDead == false or dPadRight() and player.isDead == false then
     player.isProne = false
     player.dx = player.speed * dt
     player.lastDir = 1
 
-    if love.keyboard.isDown("w") then    -- UpRight
+    if love.keyboard.isDown("w") or dPadUp() then    -- UpRight
       player.shootPoint.x, player.shootPoint.y = player.x + 50, player.y - 50
       player.controls[2].x, player.controls[2].y = 15, -3
       player.controls[3] = true
-    elseif love.keyboard.isDown("s") then -- DownRight
+    elseif love.keyboard.isDown("s") or dPadDown() then -- DownRight
       player.shootPoint.x, player.shootPoint.y = player.x + 50, player.y + 50
       player.controls[2].x, player.controls[2].y = 16, 17
       player.controls[3] = true
@@ -180,16 +180,16 @@ local function playerInput(dt, world)
       player.controls[3] = true
     end
 
-  elseif love.keyboard.isDown("a") or dPadLeft() and player.isDead == false then
+  elseif love.keyboard.isDown("a") and player.isDead == false or dPadLeft() and player.isDead == false then
     player.isProne = false
     player.dx = -player.speed * dt
     player.lastDir = 0
 
-    if love.keyboard.isDown("w") then -- UpLeft
+    if love.keyboard.isDown("w") or dPadUp() then -- UpLeft
       player.shootPoint.x, player.shootPoint.y = player.x - 50, player.y - 50
       player.controls[2].x, player.controls[2].y = -6, 0
       player.controls[3] = true
-    elseif love.keyboard.isDown("s") then -- DownLeft
+    elseif love.keyboard.isDown("s") or dPadDown() then -- DownLeft
       player.shootPoint.x, player.shootPoint.y = player.x - 50, player.y + 50
       player.controls[2].x, player.controls[2].y = -7, 17
       player.controls[3] = true
@@ -199,7 +199,7 @@ local function playerInput(dt, world)
       player.controls[3] = true
     end
 
-  elseif love.keyboard.isDown("w") then -- Up
+  elseif love.keyboard.isDown("w") or dPadUp() then -- Up
     player.isProne = false
     player.shootPoint.x, player.shootPoint.y = player.x, player.y - 50
     player.controls[3] = true
@@ -209,7 +209,7 @@ local function playerInput(dt, world)
       player.controls[2].x, player.controls[2].y = 4, -16
     end
 
-  elseif love.keyboard.isDown("s") then -- Down
+  elseif love.keyboard.isDown("s") or dPadDown() then -- Down
     if player.isJumping or player.isGrounded == false then
       player.isProne = false
       player.controls[3] = true
@@ -262,7 +262,7 @@ local function playerInput(dt, world)
   end
 
   -- jump --
-  if (love.keyboard.isDown('n') and player.isJumping == false and player.isGrounded and player.jumpLock == false) or (pressX() and player.isJumping == false and player.isGrounded) then -- when the player hits jump
+  if (love.keyboard.isDown('n') and player.isJumping == false and player.isGrounded and player.jumpLock == false) or (pressX() and player.isJumping == false and player.isGrounded and player.jumpLock == false) then -- when the player hits jump
     player.isJumping = true
     player.jumpLock = true
     player.isGrounded = false
@@ -351,13 +351,13 @@ function updatePlayer(dt, world) -- Update Player Movement [http://2dengine.com/
 
   if player.dx ~= 0 and player.lives > -1 or player.dy ~= 0 and player.lives > -1 then
     -- check if player has temporary invincibility
-    if player.type == "invincible" then player.x, player.y, cols, len = world:move(player, player.x + player.dx, player.y + player.dy, player.respawnFilter)
-    else player.x, player.y, cols, len = world:move(player, player.x + player.dx, player.y + player.dy, player.filter) end
+    if player.type == "invincible" then player.x, player.y, pcols, plen = world:move(player, player.x + player.dx, player.y + player.dy, player.respawnFilter)
+    else player.x, player.y, pcols, plen = world:move(player, player.x + player.dx, player.y + player.dy, player.filter) end
 
     -- check if player is grounded
-    if len > 0 then
-      for i = 1, len do
-        if cols[i].other.type == "ground" then
+    if plen > 0 then
+      for i = 1, plen do
+        if pcols[i].other.type == "ground" then
           player.isGrounded = true
           break
         end
@@ -366,8 +366,8 @@ function updatePlayer(dt, world) -- Update Player Movement [http://2dengine.com/
       player.isGrounded = false
     end
 
-    for i = 1, len do
-      if cols[i].other.type == "portal" then
+    for i = 1, plen do
+      if pcols[i].other.type == "portal" then
         endLevel = true
         addTimer(2.0, "fadeOut", player.timers)
       end
@@ -403,6 +403,12 @@ function updatePlayer(dt, world) -- Update Player Movement [http://2dengine.com/
       love.audio.play(playerSounds.shoot)
       player.shootLock = true
 
+      if player.lastDir == 1 then
+        camera:move(-1.4, .2)
+      else
+        camera:move(1.4, .2)
+      end
+
       if player.isProne then
         resetTimer(0.05, "proneShot", player.timers)
       end
@@ -425,15 +431,15 @@ function updatePlayer(dt, world) -- Update Player Movement [http://2dengine.com/
   if player.isDead == false then
     if player.isJumping or not player.isGrounded then
       player.curAnim = 6 -- [JUMPING]
-    elseif player.dx <= 0.8 and player.dx >= -0.8 and love.keyboard.isDown('s') then
+    elseif player.dx <= 0.8 and player.dx >= -0.8 and love.keyboard.isDown('s') or player.dx <= 0.8 and player.dx >= -0.8 and dPadDown() then -- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       if updateTimer(dt, "proneShot", player.timers) == false then
         player.curAnim = 12 -- [PRONE SHOOTING]
       else
         player.curAnim = 11 -- [PRONE]
       end
-    elseif player.dx <= 0.8 and player.dx >= -0.8 and love.keyboard.isDown('w') == false
+    elseif player.dx <= 0.8 and player.dx >= -0.8 and love.keyboard.isDown('w') == false and dPadUp() == false
       then player.curAnim = 1 -- [IDLE]
-    elseif player.dx <= 0.8 and player.dx >= -0.8 and love.keyboard.isDown('w')
+    elseif player.dx <= 0.8 and player.dx >= -0.8 and love.keyboard.isDown('w') or player.dx <= 0.8 and player.dx >= -0.8 and dPadUp()
       then player.curAnim = 5 -- [LOOKING UP]
     elseif animTimer <= 0 then
       player.curAnim = 2 -- [IDLE RUN]
@@ -441,12 +447,12 @@ function updatePlayer(dt, world) -- Update Player Movement [http://2dengine.com/
       player.animations[4]:update(dt)
       player.animations[7]:update(dt)
 
-    elseif animTimer > 0 and love.keyboard.isDown('s') then
+    elseif animTimer > 0 and love.keyboard.isDown('s') or animTimer > 0 and dPadDown() then
       player.curAnim = 7 -- [SHOOT N RUN DIAGONAL DOWN]
       player.animations[3]:update(dt)
       player.animations[2]:update(dt)
       player.animations[4]:update(dt)
-    elseif animTimer > 0 and love.keyboard.isDown('w') then
+    elseif animTimer > 0 and love.keyboard.isDown('w') or animTimer > 0 and dPadUp() then
       player.curAnim = 4-- [SHOOT N RUN DIAGONAL]
       player.animations[3]:update(dt)
       player.animations[2]:update(dt)
@@ -464,8 +470,9 @@ function updatePlayer(dt, world) -- Update Player Movement [http://2dengine.com/
 end
 
 function drawPlayer()
-  -- love.graphics.rectangle("line", player.x, player.y, player.w, player.h) -- player
-  -- love.graphics.rectangle("line", proneRect.x, proneRect.y, proneRect.w, proneRect.h) -- prone
+  --love.graphics.print(player.type, player.x, player.y)
+  --love.graphics.rectangle("line", player.x, player.y, player.w, player.h) -- player
+  --love.graphics.rectangle("line", proneRect.x, proneRect.y, proneRect.w, proneRect.h) -- prone
   if player.lives > -1 then
     if player.type == "player" or player.isDead or player.type == "invincibleProne" then
       setColor({255, 255, 255, 255})

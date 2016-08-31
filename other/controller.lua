@@ -14,6 +14,14 @@ function loadController()
   end
 end
 
+function pressStart()
+  if noController then
+    return false
+  else
+    return joystick:isGamepadDown("start")
+  end
+end
+
 function dPadLeft()
   if noController then
     return false
@@ -27,6 +35,22 @@ function dPadRight()
     return false
   else
     return joystick:isGamepadDown("dpright")
+  end
+end
+
+function dPadUp()
+  if noController then
+    return false
+  else
+    return joystick:isGamepadDown("dpup")
+  end
+end
+
+function dPadDown()
+  if noController then
+    return false
+  else
+    return joystick:isGamepadDown("dpdown")
   end
 end
 

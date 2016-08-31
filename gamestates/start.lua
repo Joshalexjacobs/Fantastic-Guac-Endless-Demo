@@ -27,3 +27,11 @@ function menu:keypressed(key, code)
         Gamestate.switch(game, dictionary[1].name) -- switch to game and send select level name
     elseif key =='escape' then love.event.quit() end -- if player hits esc then quit
 end
+
+function menu:gamepadpressed( joystick, button )
+  if button == 'a' or button == 'b' then
+    Gamestate.switch(game, dictionary[1].name) -- switch to game and send select level name
+  elseif button == 'start' then
+    love.event.quit()
+  end
+end

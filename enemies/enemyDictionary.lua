@@ -28,7 +28,6 @@ end
 local function grenadeBehaviour(dt, entity, world)
   if checkTimer("start", entity.timers) == false then
     entity.dy = -3.75
-    entity.type = "invincible"
     addTimer(0.0, "start", entity.timers)
   end
 
@@ -563,6 +562,205 @@ local function mgUPBehaviour(dt, entity, world)
     entity.animations[entity.curAnim]:update(dt)
 end
 
+-- WALL --
+local function wallBehaviour(dt, entity, world)
+  if entity.hp < 100 then
+    if entity.direction == "right" and entity.isDead == false then
+      entity.dx = -10
+    elseif entity.direction == "left" and entity.isDead == false then
+      entity.dx = 10
+    end
+
+    entity.hp = 100
+  else
+    if entity.direction == "right" and entity.isDead == false then
+      entity.dx = 3 * dt
+    elseif entity.direction == "left" and entity.isDead == false then
+      entity.dx = -(3 * dt)
+    end
+  end
+
+  -- handle/update current animation running
+  entity.animations[entity.curAnim]:update(dt)
+end
+
+-- EYE --
+local function eyeBehaviour(dt, entity, world)
+  entity.dy = 0.5 * math.sin(love.timer.getTime() * 2 * math.pi)
+
+  if checkTimer("bomb", entity.timers) == false then
+    addTimer(1.3, "bomb", entity.timers)
+  end
+
+  if updateTimer(dt, "bomb", entity.timers) then
+    addEnemy("grenade", entity.x, entity.y, entity.direction, world)
+
+    resetTimer(1.3, "bomb", entity.timers)
+  end
+
+  if entity.direction == "right" and entity.isDead == false then
+    entity.dx = 120 * dt
+  elseif entity.direction == "left" and entity.isDead == false then
+    entity.dx = -(120 * dt)
+  end
+
+  if entity.direction == "left" and entity.x < -100 then
+    entity.direction = "right"
+
+    for i = 1, #entity.animations do
+      entity.animations[i]:flipH()
+    end
+  elseif entity.direction == "right" and entity.x > 650 then
+    entity.direction = "left"
+
+    for i = 1, #entity.animations do
+      entity.animations[i]:flipH()
+    end
+  end
+
+  if entity.isDead then entity.playDead = true end
+
+  -- handle/update current animation running
+  entity.animations[entity.curAnim]:update(dt)
+end
+
+-- DED RUNNER --
+local function dedRunBehaviour(dt, entity, world)
+  if checkTimer("spawn", entity.timers) == false then
+    addTimer(1.0, "spawn", entity.timers)
+  end
+
+  if checkTimer("turnAround", entity.timers) and updateTimer(dt, "turnAround", entity.timers) then
+    if entity.direction == "right" and entity.isDead == false then
+      entity.direction = "left"
+    elseif entity.direction == "left" and entity.isDead == false then
+      entity.direction = "right"
+    end
+
+    deleteTimer("turnAround", entity.timers)
+  end
+
+  if updateTimer(dt, "spawn", entity.timers) then
+    if entity.direction == "right" and entity.isDead == false then
+      entity.dx = 50 * dt
+    elseif entity.direction == "left" and entity.isDead == false then
+      entity.dx = -(50 * dt)
+    end
+  end
+
+  if entity.isDead and checkTimer("death", entity.timers) == false then
+    addTimer(0.3, "death", entity.timers)
+    --entity.curAnim = 2
+    entity.dy = -3.75
+    entity.dx = 0
+    entity.type = "dead"
+  elseif entity.isDead and updateTimer(dt, "death", entity.timers) then
+    entity.playDead = true
+  end
+
+  -- handle/update current animation running
+  entity.animations[entity.curAnim]:update(dt)
+end
+
+--  CUBE --
+local function cubeBehaviour(dt, entity, world)
+  if entity.isDead == false then
+    entity.dy = 0.05 * math.sin(love.timer.getTime() * 0.25 * math.pi)
+  end
+
+  if checkTimer("spawn1", entity.timers) == false then
+    addTimer(3.0, "spawn1", entity.timers)
+  end
+
+  if updateTimer(dt, "spawn1", entity.timers) and entity.isDead == false then
+    addEnemy("skull", entity.x + 5, entity.y, "right", world)
+    addEnemy("skull", entity.x + 5, entity.y, "left", world)
+    addTimer(0.3, "spawn2", entity.timers)
+    resetTimer(4.5, "spawn1", entity.timers)
+  elseif updateTimer(dt, "spawn2", entity.timers) and entity.isDead == false then
+    addEnemy("skull", entity.x + 5, entity.y, "right", world)
+    addEnemy("skull", entity.x + 5, entity.y, "left", world)
+    deleteTimer("spawn2", entity.timers)
+
+  end
+
+  if entity.isDead and checkTimer("fall", entity.timers) == false then
+    entity.curAnim = 2
+    entity.type = "dead"
+    entity.gravity = 10
+    addTimer(0.63, "fall", entity.timers)
+  elseif entity.isDead and updateTimer(dt, "fall", entity.timers) and checkTimer("dead", entity.timers) == false then
+    entity.curAnim = 3
+    addTimer(0.6, "dead", entity.timers)
+
+    local shake = love.math.random(-4, 4) * 0.5
+    if shake == 0 then shake = 1 end
+    camera:move(shake, shake)
+  elseif entity.isDead and updateTimer(dt, "dead", entity.timers) then
+    entity.playDead = true;
+  end
+
+  -- handle/update current animation running
+  entity.animations[entity.curAnim]:update(dt)
+end
+
+local function skullBehaviour(dt, entity, world)
+  if checkTimer("spawn", entity.timers) == false then
+    entity.curAnim = 1
+    addTimer(1.0, "spawn", entity.timers)
+  end
+
+  if checkTimer("turnAround", entity.timers) == true then
+    if entity.direction == "right" and entity.isDead == false and checkTimer("turn", entity.timers) == false then
+      entity.direction = "left"
+      addTimer(0.1, "turn", entity.timers)
+    elseif entity.direction == "left" and entity.isDead == false and checkTimer("turn", entity.timers) == false then
+      entity.direction = "right"
+      addTimer(0.1, "turn", entity.timers)
+    end
+
+    deleteTimer("turnAround", entity.timers)
+  elseif updateTimer(dt, "turn", entity.timers) then
+    deleteTimer("turn", entity.timers)
+  end
+
+  if updateTimer(dt, "spawn", entity.timers) then
+    if entity.direction == "right" and entity.isDead == false then
+      entity.curAnim = 2
+      entity.gravity = 0
+
+      entity.dy = 0.05 * math.sin(love.timer.getTime() * 0.25 * math.pi)
+      entity.dy = entity.dy - dt
+      entity.dx = 75 * dt
+    elseif entity.direction == "left" and entity.isDead == false then
+      entity.curAnim = 2
+      entity.gravity = 0
+
+      entity.dy = 0.05 * math.sin(love.timer.getTime() * 0.25 * math.pi)
+      entity.dy = entity.dy - dt
+      entity.dx = -(75 * dt) -- 50
+    end
+  end
+
+  if entity.isDead and checkTimer("death", entity.timers) == false then
+    addTimer(0.6, "death", entity.timers)
+    entity.curAnim = 3
+    entity.dx = 0
+    entity.gravity = 0
+    entity.dy = 0
+    entity.type = "dead"
+
+    local shake = love.math.random(-4, 4) * 0.5
+    if shake == 0 then shake = 1 end
+    camera:move(shake, shake)
+  elseif entity.isDead and updateTimer(dt, "death", entity.timers) then
+    entity.playDead = true
+  end
+
+  -- handle/update current animation running
+  entity.animations[entity.curAnim]:update(dt)
+end
+
 local dictionary = {
   {
     name = "runner",
@@ -993,11 +1191,188 @@ local dictionary = {
     end,
     gravity = 9.8
   },
+
+  {
+    name = "wall",
+    hp = 100,
+    w = 58,
+    h = 192,
+    update = wallBehaviour,
+    specialDraw = nil,
+    scale = {x = 1, y = 1, offX = 5, offY = 0},
+    worldOffSet = {offX = 0, offY = 0},
+    sprite = "img/enemies/wall/wallBIG.png",
+    grid = {x = 64, y = 192, w = 64, h = 192},
+    shootPoint = {x = 0, y = 0},
+    animations = function(grid)
+      animations = {
+        anim8.newAnimation(grid(1, 1), 0.1),
+      }
+      return animations
+    end,
+    filter = function(item, other)
+      if other.type == "player" or other.type == "bullet" then
+        return 'cross'
+      end
+    end,
+    collision = function(cols, len, entity, world)
+      for i = 1, len do
+        if cols[i].other.type == "player" and entity.isDead == false then
+          cols[i].other.killPlayer(world)
+        end
+      end
+    end,
+    gravity = 0
+  },
+
+  {
+    name = "eye",
+    hp = 2,
+    w = 32,
+    h = 16,
+    update = eyeBehaviour,
+    specialDraw = nil,
+    scale = {x = 1, y = 1, offX = 0, offY = 0},
+    worldOffSet = {offX = 0, offY = 0},
+    sprite = "img/enemies/eye/eye.png",
+    grid = {x = 32, y = 16, w = 32, h = 16},
+    shootPoint = {x = 0, y = 0},
+    animations = function(grid)
+      animations = {
+        anim8.newAnimation(grid(1, 1), 0.1),
+      }
+      return animations
+    end,
+    filter = nil,
+    collision = nil,
+    gravity = 0
+  },
+
+  {
+    name = "ded runner",
+    hp = 1,
+    w = 10,
+    h = 42,
+    update = dedRunBehaviour,
+    specialDraw = nil,
+    scale = {x = 1, y = 1, offX = 10, offY = 15},
+    worldOffSet = {offX = 0, offY = 0},
+    sprite = "img/enemies/ded runner/dedrunner.png",
+    grid = {x = 32, y = 64, w = 32, h = 64},
+    shootPoint = {x = 0, y = 0},
+    animations = function(grid)
+      animations = {
+        anim8.newAnimation(grid(1, 1), 0.1),
+      }
+      return animations
+    end,
+    filter = function(item, other) -- default enemy filter
+      if other.type == "player" or other.type == "wall" then
+        return 'cross'
+      elseif other.type == "block" or other.type == "ground" or other.type == "enemyPlatform" then
+        return 'slide'
+      end
+    end,
+    collision = function(cols, len, entity, world)
+      for i = 1, len do
+        if cols[i].other.type == "player" and entity.isDead == false then
+          cols[i].other.killPlayer(world)
+          print(entity.name)
+        elseif cols[i].other.type == "wall" and entity.isDead == false then
+          addTimer(0.5, "turnAround", entity.timers)
+        end
+      end
+    end,
+    gravity = 2
+  },
+
+  {
+    name = "cube",
+    hp = 5,
+    w = 22,
+    h = 20,
+    update = cubeBehaviour,
+    specialDraw = nil,
+    scale = {x = 1, y = 1, offX = 7, offY = 6},
+    worldOffSet = {offX = 0, offY = 0},
+    sprite = "img/enemies/cube/cube.png",
+    grid = {x = 36, y = 32, w = 108, h = 160},
+    shootPoint = {x = 0, y = 0},
+    animations = function(grid)
+      animations = {
+        anim8.newAnimation(grid('1-3', '1-2', '1-2', 3), 0.15),
+        anim8.newAnimation(grid('1-3', '1-2', '1-2', 3), 0.25),
+        anim8.newAnimation(grid('1-3', '4-5', 3, 3), 0.1, "pauseAtEnd")
+      }
+      return animations
+    end,
+    filter = function(item, other) -- default enemy filter
+      if other.type == "player" or other.name == "wall" then
+        return 'cross'
+      elseif other.type == "block" or other.type == "ground" or other.type == "enemyPlatform" then
+        return 'slide'
+      end
+    end,
+    collision = function(cols, len, entity, world)
+      for i = 1, len do
+        if cols[i].other.type == "player" and entity.isDead == false then
+          cols[i].other.killPlayer(world)
+          print(entity.name)
+        elseif cols[i].other.name == "wall" and entity.isDead == false then
+          entity.isDead = true
+          entity.curAnim = 3
+          addTimer(0.6, "dead", entity.timers)
+          addTimer(0.0, "fall", entity.timers)
+        end
+      end
+    end,
+    gravity = 0
+  },
+
+  {
+    name = "skull",
+    hp = 1,
+    w = 10,
+    h = 20,
+    update = skullBehaviour,
+    specialDraw = nil,
+    scale = {x = 1, y = 1, offX = 5, offY = -2},
+    worldOffSet = {offX = 0, offY = 0},
+    sprite = "img/enemies/skull/skull.png",
+    grid = {x = 16, y = 16, w = 48, h = 80},
+    shootPoint = {x = 0, y = 0},
+    animations = function(grid)
+      animations = {
+        anim8.newAnimation(grid('1-3', 1, '1-2', 2), 0.1, "pauseAtEnd"), -- 1 spawn
+        anim8.newAnimation(grid('1-2', 3), 0.1), -- 2 idle
+        anim8.newAnimation(grid('1-3', '4-5', 3, 2), 0.08, "pauseAtEnd"), -- 3 dying
+      }
+      return animations
+    end,
+    filter = function(item, other) -- default enemy filter
+      if other.type == "player" or other.name == "wall" then
+        return 'cross'
+      elseif other.type == "block" or other.type == "ground" or other.type == "enemyPlatform" then
+        return 'slide'
+      end
+    end,
+    collision = function(cols, len, entity, world)
+      for i = 1, len do
+        if cols[i].other.type == "player" and entity.isDead == false then
+          cols[i].other.killPlayer(world)
+          entity.isDead = true
+          print(entity.name)
+        elseif cols[i].other.name == "wall" and entity.isDead == false then
+          addTimer(0.0, "turnAround", entity.timers)
+        end
+      end
+    end,
+    gravity = 3.8
+  },
 }
 
 function getEnemy(newEnemy) -- create some sort of clever dictionary look up function later on..if A > B etc... dictionary stuff
   for i=1, #dictionary do
-
     if newEnemy.name == dictionary[i].name then
       newEnemy.hp, newEnemy.w, newEnemy.h = dictionary[i].hp, dictionary[i].w, dictionary[i].h
 
@@ -1026,7 +1401,6 @@ function getEnemy(newEnemy) -- create some sort of clever dictionary look up fun
         newEnemy.filter = dictionary[i].filter
         newEnemy.collision = dictionary[i].collision
       end
-
     end
   end
 end
