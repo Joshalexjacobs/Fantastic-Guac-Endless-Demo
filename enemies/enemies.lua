@@ -15,6 +15,7 @@ local enemy = {
   curAnim = 1,
   shootPoint = {x = 0, y = 0}, -- point that determines where bullets spawn (in relation to enemy.x and enemy.y)
   scale = {x = nil, y = nil, offX = nil, offY = nil},
+  rotate = 0,
   worldOffSet = {offX = 0, offY = 0},
   x = 0,
   y = 0,
@@ -91,7 +92,7 @@ function enemy.draw(newEnemy)
     setColor(newEnemy.color)
   end
 
-  newEnemy.animations[newEnemy.curAnim]:draw(newEnemy.spriteSheet, newEnemy.x, newEnemy.y, 0, newEnemy.scale.x, newEnemy.scale.y, newEnemy.scale.offX, newEnemy.scale.offY)
+  newEnemy.animations[newEnemy.curAnim]:draw(newEnemy.spriteSheet, newEnemy.x, newEnemy.y, newEnemy.rotate, newEnemy.scale.x, newEnemy.scale.y, newEnemy.scale.offX, newEnemy.scale.offY)
   if newEnemy.specialDraw ~= nil then newEnemy.specialDraw(newEnemy) end
   setColor({255, 255, 255, 255})
 
@@ -101,11 +102,12 @@ end
 enemies = {}
 
 -- General Functions --
-function addEnemy(name, x, y, dir, world, uniqueParam)
+function addEnemy(name, x, y, dir, world, uniqueParam, rotate)
   local newEnemy = copy(enemy, newEnemy) -- create a copy of enemy
   newEnemy.name, newEnemy.x, newEnemy.y, newEnemy.direction = name, x, y, dir
 
   if uniqueParam ~= nil then newEnemy.uniqueParam = uniqueParam end
+  if rotate ~= nil then newEnemy.rotate = rotate end
 
   getEnemy(newEnemy) -- update newEnemy depending on it's name
 

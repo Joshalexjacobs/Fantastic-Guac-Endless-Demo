@@ -18,7 +18,7 @@ require 'bubble'
 local bump   = require 'collision/bump'
 local math   = require "math"
 
-local Camera = require "humpCamera"
+local Camera = require "camera"
 
 player = require 'player'
 
@@ -33,8 +33,8 @@ game = {}
 endLevel = false
 
 gameTimer = {
-  time = 0,
-  lastEvent = 0
+  time = 117, -- 98
+  lastEvent = 117 -- 90
 }
 
 -- Camera boundaries
@@ -187,7 +187,47 @@ function game:timerEvents()
     addEnemy("cube", 250, 15, "right", world)
     addEnemy("cube", 300, 15, "right", world)
     gameTimer.lastEvent = 45
-  end -- 60
+  elseif gameTimer.time >= 59 and gameTimer.lastEvent < 59 then
+    addEnemy("big cube", 200, 15, "right", world)
+    addEnemy("cube", 300, 15, "right", world)
+    addEnemy("cube", 100, 15, "right", world)
+    gameTimer.lastEvent = 59
+  elseif gameTimer.time >= 69 and gameTimer.lastEvent < 69 then
+    addEnemy("big cube", 100, 15, "right", world)
+    addEnemy("cube", 300, 15, "right", world)
+    addEnemy("cube", 200, 15, "right", world)
+    gameTimer.lastEvent = 69
+  elseif gameTimer.time >= 79 and gameTimer.lastEvent < 79 then
+    addEnemy("big cube", 300, 15, "right", world)
+    addEnemy("cube", 100, 25, "right", world)
+    addEnemy("cube", 200, 25, "right", world)
+    gameTimer.lastEvent = 79
+  elseif gameTimer.time >= 89 and gameTimer.lastEvent < 89 then
+    addEnemy("cube", 100, 25, "right", world)
+    addEnemy("cube", 125, 15, "right", world)
+    addEnemy("triangle", 200, 25, "right", world)
+    addEnemy("cube", 275, 15, "right", world)
+    addEnemy("cube", 300, 25, "right", world)
+    gameTimer.lastEvent = 89
+  elseif gameTimer.time >= 100 and gameTimer.lastEvent < 100 then
+    addEnemy("triangle", 50, 25, "right", world)
+    addEnemy("triangle", 350, 25, "right", world)
+    gameTimer.lastEvent = 100
+  elseif gameTimer.time >= 101 and gameTimer.lastEvent < 101 then
+    addEnemy("triangle", 100, 15, "right", world)
+    addEnemy("triangle", 300, 15, "right", world)
+    gameTimer.lastEvent = 101
+  elseif gameTimer.time >= 102 and gameTimer.lastEvent < 102 then
+    addEnemy("triangle", 150, 25, "right", world)
+    addEnemy("triangle", 250, 25, "right", world)
+    gameTimer.lastEvent = 102
+  elseif gameTimer.time >= 103 and gameTimer.lastEvent < 103 then
+    addEnemy("triangle", 200, 15, "right", world)
+    gameTimer.lastEvent = 103
+  elseif gameTimer.time >= 120 and gameTimer.lastEvent < 120 then
+    addEnemy("ogre", 200, 20, "right", world)
+    gameTimer.lastEvent = 120
+  end
 end
 
 function game:update(dt)
@@ -295,6 +335,7 @@ function game:draw()
   setColor({255, 255, 255, 255})
 
   love.graphics.print(tostring(love.timer.getFPS( )), 0.2, 0.2, 0, 0.35, 0.35) -- print fps in the top left corner of the screen
+  love.graphics.print(tostring(player.xp) .. " " .. tostring(player.shootTimerMax), 0.2, 20, 0, 0.35, 0.35)
 
   local minute = math.floor(gameTimer.time / 59)
   local seconds = gameTimer.time % 59

@@ -168,7 +168,7 @@ local function handleBullets(dt, left, viewportWidth, world, bullets)
 
     if newBullet.isDead == false then newBullet.reaction(newBullet, bcols, blen) end
 
-    if (newBullet.x > left + viewportWidth + newBullet.w) or (newBullet.x < left - newBullet.w) or (newBullet.y < -16) then
+    if (newBullet.x > left + viewportWidth + newBullet.w + 10) or (newBullet.x < left - newBullet.w) or (newBullet.y < -16) then
       newBullet.isDead = true
     end
 

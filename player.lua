@@ -33,6 +33,7 @@ local player = {
   shootTimerMax = 0.13, -- 0.07
   bulletsMax = 4,
   upgrade = nil,
+  xp = 0,
   filter = function(item, other)
     if other.type == "enemy" then
       return 'cross'
@@ -67,7 +68,7 @@ local player = {
         player.dy = -5
       end
 
-      player.shootTimerMax = 0.17
+      --player.shootTimerMax = 0.13 -- only for endless mode should this be commented out
       player.bulletsMax = 4
       player.upgrade = nil
 
@@ -98,6 +99,8 @@ local proneRect = {
 local playerSounds = {
   shoot = nil
 }
+
+local xpReq = 20
 
 respawnTimer = 0
 respawnTimerMax = 2.0 -- 4 seconds
@@ -380,6 +383,13 @@ function updatePlayer(dt, world) -- Update Player Movement [http://2dengine.com/
   end
 
   --------- SHOOTING ---------
+
+  if player.xp >= xpReq and xpReq == 20 then
+    player.shootTimerMax = player.shootTimerMax - 0.05
+    player.bulletsMax = player.bulletsMax + 1
+    player.xp = player.xp - xpReq
+    xpReq = xpReq + 30
+  end
 
   -- decrement shootTimer and animTimer--
   if shootTimer > 0 then shootTimer = shootTimer - (1 * dt) end
