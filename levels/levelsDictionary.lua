@@ -28,8 +28,8 @@ local dictionary = {
               --{name = "cube", count = 0, max = 1, side = "left", x = 100, y = 15, dynamic = false, spawnTimer = 0, spawnTimerMax = 2},
               --{name = "cube", count = 0, max = 1, side = "left", x = 400, y = 15, dynamic = false, spawnTimer = 0, spawnTimerMax = 2},
 
-              --{name = "wall", count = 0, max = 1, side = "right", x = -64, y = 0, dynamic = false, spawnTimer = 0, spawnTimerMax = 2},
-              --{name = "wall", count = 0, max = 1, side = "left", x = 510, y = 0, dynamic = false, spawnTimer = 0, spawnTimerMax = 2},
+              {name = "wall", count = 0, max = 1, side = "right", x = -64, y = 0, dynamic = false, spawnTimer = 0, spawnTimerMax = 2},
+              {name = "wall", count = 0, max = 1, side = "left", x = 510, y = 0, dynamic = false, spawnTimer = 0, spawnTimerMax = 2},
 
               --{name = "eye", count = 0, max = 1, side = "left", x = 200, y = 50, dynamic = false, spawnTimer = 0, spawnTimerMax = 2},
               --{name = "ded runner", count = 0, max = 1000, side = "left", x = 200, y = 120, dynamic = true, spawnTimer = 0, spawnTimerMax = 3},

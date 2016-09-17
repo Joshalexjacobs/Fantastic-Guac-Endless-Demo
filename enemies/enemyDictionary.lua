@@ -940,14 +940,21 @@ local function ogreBehaviour(dt, entity, world)
     entity.curAnim = 2
     entity.type = "enemy"
 
-    -- spawn left hand
-    addEnemy("ogreHandLeft", entity.x - 120, entity.y + 25, "right", world)
-
     addTimer(0.0, "follow", entity.timers)
+    addTimer(0.4, "spawnHand1", entity.timers)
   end
 
   if checkTimer("follow", entity.timers) then
     entity.dx = math.max(player.x - (entity.x + entity.w / 2)) * 1 * dt
+  end
+
+  if updateTimer(dt, "spawnHand1", entity.timers) then
+    deleteTimer("spawnHand1", entity.timers)
+    addTimer(1.4, "spawnHand2", entity.timers)
+    addEnemy("ogreHandLeft", entity.x - 120, entity.y + 25, "right", world)
+  elseif updateTimer(dt, "spawnHand2", entity.timers) then
+    addEnemy("ogreHandRight", entity.x + 120, entity.y + 25, "left", world)
+    deleteTimer("spawnHand2", entity.timers)
   end
 
   if entity.isDead == false then
@@ -963,20 +970,63 @@ local function ogreBehaviour(dt, entity, world)
   entity.animations[entity.curAnim]:update(dt)
 end
 
--- OGRE HAND --
+-- OGRE HAND LEFT --
 local function ogreHandLeftBehaviour(dt, entity, world)
   if checkTimer("spawn", entity.timers) == false then
     addTimer(0.6, "spawn", entity.timers)
     entity.uniqueStorage = 1
+  elseif updateTimer(dt, "spawn", entity.timers) and checkTimer("spawnSkull", entity.timers) == false then
+    if entity.type ~= "enemy" then entity.type = "enemy" end
+    entity.dx = 0
 
-  elseif updateTimer(dt, "spawn", entity.timers) and entity.curAnim == 1 then
+    addTimer(0.15, "spawnSkull", entity.timers)
+  elseif updateTimer(dt, "spawnSkull", entity.timers) and checkTimer("spawnSkull2", entity.timers) == false then
+    entity.curAnim = 6
+    addEnemy("skull", entity.x + 13, entity.y + 15, "left", world)
+    addTimer(0.15, "spawnSkull2", entity.timers)
+  elseif updateTimer(dt, "spawnSkull2", entity.timers) and checkTimer("spawnSkull3", entity.timers) == false then
+    addEnemy("skull", entity.x + 13, entity.y + 15, "right", world)
+    addTimer(0.15, "spawnSkull3", entity.timers)
+  elseif updateTimer(dt, "spawnSkull3", entity.timers) and checkTimer("spawnSkull4", entity.timers) == false then
+    addEnemy("skull", entity.x + 13, entity.y + 15, "left", world)
+    addTimer(0.15, "spawnSkull4", entity.timers)
+  elseif updateTimer(dt, "spawnSkull4", entity.timers) and checkTimer("spawnSkull5", entity.timers) == false then
+    addEnemy("skull", entity.x + 13, entity.y + 15, "right", world)
+    addTimer(0.15, "spawnSkull5", entity.timers)
+  elseif updateTimer(dt, "spawnSkull5", entity.timers) and entity.curAnim == 6 then
     entity.curAnim = 2
-    entity.type = "enemy"
     addTimer(1.0, "idle", entity.timers)
   end
 
   if checkTimer("idle", entity.timers) then
-    entity.dx = math.max(ogreHead.x - entity.x - 120 / entity.uniqueStorage) * (4 + entity.uniqueStorage) * dt
+    if entity.direction == "right" then
+      entity.dx = math.max(ogreHead.x - entity.x - 120 / entity.uniqueStorage) * (4 + entity.uniqueStorage) * dt
+    else
+      entity.dx = math.max(ogreHead.x - entity.x + 120 / entity.uniqueStorage) * (4 + entity.uniqueStorage) * dt
+    end
+  elseif checkTimer("reset", entity.timers) then
+    if entity.direction == "right" then
+      entity.dx = math.max(ogreHead.x - entity.x - 120) * 4 * dt
+    else
+      entity.dx = math.max(ogreHead.x - entity.x + 120) * 4 * dt
+    end
+
+    if updateTimer(dt, "reset", entity.timers) then
+      entity.dx = 0
+
+      entity.animations[2]:gotoFrame(1)
+      entity.animations[2]:resume()
+
+      entity.animations[5]:gotoFrame(1)
+      entity.animations[5]:resume()
+      entity.curAnim = 5
+
+
+      entity.animations[6]:gotoFrame(1)
+      entity.animations[6]:resume()
+
+      entity.timers = {}
+    end
   end
 
   if updateTimer(dt, "idle", entity.timers) and checkTimer("crush", entity.timers) == false then
@@ -1001,15 +1051,17 @@ local function ogreHandLeftBehaviour(dt, entity, world)
     entity.animations[3]:resume()
 
     deleteTimer("rise", entity.timers)
-    addTimer(0.3, "idle", entity.timers)
-  elseif entity.uniqueStorage > 3 then
-    entity.uniqueStorage = 1
-    resetTimer(1.0, "idle", entity.timers)
+
+    if entity.uniqueStorage > 2 then
+      addTimer(0.5, "reset", entity.timers)
+    else
+      addTimer(0.3, "idle", entity.timers)
+    end
   end
 
   if updateTimer(dt, "shake", entity.timers) then
     deleteTimer("shake", entity.timers)
-    local shake = love.math.random(-4, 4) * 0.5
+    local shake = love.math.random(-5, 5) * 0.5
     if shake == 0 then shake = 1 end
     camera:move(shake, shake)
   end
@@ -1853,7 +1905,7 @@ local dictionary = {
   {
     name = "ogre",
     type = "notEnemy",
-    hp = 15,
+    hp = 100,
     w = 56,
     h = 54,
     update = ogreBehaviour,
@@ -1879,7 +1931,7 @@ local dictionary = {
   {
     name = "ogreHandLeft",
     type = "notEnemy",
-    hp = 15,
+    hp = 50,
     w = 42,
     h = 32,
     update = ogreHandLeftBehaviour,
@@ -1887,14 +1939,68 @@ local dictionary = {
     scale = {x = 0.75, y = 0.75, offX = 20, offY = 23},
     worldOffSet = {offX = 0, offY = 0},
     sprite = "img/enemies/ogre/handBIG.png",
-    grid = {x = 96, y = 96, w = 288, h = 864},
+    grid = {x = 96, y = 96, w = 288, h = 1344},
     shootPoint = {x = 0, y = 0},
     animations = function(grid)
       animations = {
         anim8.newAnimation(grid("1-3", 8, "1-2", 9), 0.1, "pauseAtEnd"), -- 1 spawning
-        anim8.newAnimation(grid(2, 1, 1, 1), 0.2, "pauseAtEnd"), -- 2 making a fist
+        anim8.newAnimation(grid(2, 1, 1, 1), 0.2, "pauseAtEnd"), -- 2 hand to fist
         anim8.newAnimation(grid("1-3", 4, 1, 5), 0.1, "pauseAtEnd"), -- 3 moving down
         anim8.newAnimation(grid("2-3", 6, "1-2", 7), 0.1, "pauseAtEnd"), -- 4 slam
+        anim8.newAnimation(grid(2, 1, 2, 9), 0.2, "pauseAtEnd"), -- 5 fist to hand
+        anim8.newAnimation(grid("1-2", 10, 1, 10, 2, 9), {0.1, 0.2, 0.1, 0.1}, "pauseAtEnd"), -- 6 spawn enemies
+      }
+      return animations
+    end,
+    filter = function(item, other) -- default enemy filter
+      if other.type == "player" then
+        return 'cross'
+      elseif other.type == "block" or other.type == "ground" or other.type == "enemyPlatform" then
+        return 'slide'
+      end
+    end,
+    collision = function(cols, len, entity, world)
+      for i = 1, len do
+        if cols[i].other.type == "player" and entity.isDead == false then
+          cols[i].other.killPlayer(world)
+          print(entity.name)
+        elseif cols[i].other.type == "ground" and entity.isDead == false and entity.curAnim ~= 4 then
+          entity.animations[4]:gotoFrame(1)
+          entity.animations[4]:resume()
+
+          entity.curAnim = 4
+          if checkTimer("crush", entity.timers) then
+            deleteTimer("crush", entity.timers)
+            addTimer(0.6, "slam", entity.timers)
+            addTimer(0.0, "shake", entity.timers)
+          end
+        end
+      end
+    end,
+    gravity = 0
+  },
+
+  {
+    name = "ogreHandRight",
+    type = "notEnemy",
+    hp = 50,
+    w = 42,
+    h = 32,
+    update = ogreHandLeftBehaviour,
+    specialDraw = nil,
+    scale = {x = 0.75, y = 0.75, offX = 20, offY = 23},
+    worldOffSet = {offX = 0, offY = 0},
+    sprite = "img/enemies/ogre/handRightBIG.png",
+    grid = {x = 96, y = 96, w = 288, h = 1344},
+    shootPoint = {x = 0, y = 0},
+    animations = function(grid)
+      animations = {
+        anim8.newAnimation(grid("1-3", 8, "1-2", 9), 0.1, "pauseAtEnd"), -- 1 spawning
+        anim8.newAnimation(grid(2, 1, 1, 1), 0.2, "pauseAtEnd"), -- 2 hand to fist
+        anim8.newAnimation(grid("1-3", 4, 1, 5), 0.1, "pauseAtEnd"), -- 3 moving down
+        anim8.newAnimation(grid("2-3", 6, "1-2", 7), 0.1, "pauseAtEnd"), -- 4 slam
+        anim8.newAnimation(grid(2, 1, 2, 9), 0.2, "pauseAtEnd"), -- 5 fist to hand
+        anim8.newAnimation(grid("1-2", 10, 1, 10, 2, 9), {0.1, 0.2, 0.1, 0.1}, "pauseAtEnd"), -- 6 spawn enemies
       }
       return animations
     end,
