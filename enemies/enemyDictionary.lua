@@ -564,20 +564,42 @@ end
 
 -- WALL --
 local function wallBehaviour(dt, entity, world)
-  if entity.hp < 100 then
+  if checkTimer("spawn", entity.timers) == false then
+    addTimer(0.0, "spawn", entity.timers)
+    entity.uniqueStorage = {}
+    entity.uniqueStorage.x = entity.x
+    entity.uniqueStorage.hp = entity.hp
+  end
+
+  if entity.hp < entity.uniqueStorage.hp then
     if entity.direction == "right" and entity.isDead == false then
       entity.dx = -10
     elseif entity.direction == "left" and entity.isDead == false then
       entity.dx = 10
     end
 
-    entity.hp = 100
+    entity.uniqueStorage.hp = entity.uniqueStorage.hp - 1
   else
     if entity.direction == "right" and entity.isDead == false then
       entity.dx = 3 * dt
     elseif entity.direction == "left" and entity.isDead == false then
       entity.dx = -(3 * dt)
     end
+  end
+
+  if entity.isDead and entity.x ~= entity.uniqueStorage.x then
+    entity.dx = math.max(entity.uniqueStorage.x - entity.x) * 2 * dt
+    if checkTimer("wait", entity.timers) == false then
+      addTimer(15.0, "wait", entity.timers)
+    end
+  end
+
+  if updateTimer(dt, "wait", entity.timers) then
+    entity.dx = 0
+    entity.isDead = false
+    entity.hp = 10
+    entity.uniqueStorage.hp = entity.hp
+    deleteTimer("wait", entity.timers)
   end
 
   -- handle/update current animation running
@@ -930,6 +952,7 @@ end
 local ogreHead = {
   x = 0,
   y = 0,
+  status = "alive"
 }
 
 -- OGRE --
@@ -963,6 +986,7 @@ local function ogreBehaviour(dt, entity, world)
   end
 
   if entity.isDead then
+    ogreHead.alive = false
     entity.playDead = true
   end
 
@@ -970,93 +994,97 @@ local function ogreBehaviour(dt, entity, world)
   entity.animations[entity.curAnim]:update(dt)
 end
 
--- OGRE HAND LEFT --
-local function ogreHandLeftBehaviour(dt, entity, world)
-  if checkTimer("spawn", entity.timers) == false then
-    addTimer(0.6, "spawn", entity.timers)
-    entity.uniqueStorage = 1
-  elseif updateTimer(dt, "spawn", entity.timers) and checkTimer("spawnSkull", entity.timers) == false then
-    if entity.type ~= "enemy" then entity.type = "enemy" end
-    entity.dx = 0
+-- OGRE HAND --
+local function ogreHandBehaviour(dt, entity, world)
+  if entity.isDead == false then
 
-    addTimer(0.15, "spawnSkull", entity.timers)
-  elseif updateTimer(dt, "spawnSkull", entity.timers) and checkTimer("spawnSkull2", entity.timers) == false then
-    entity.curAnim = 6
-    addEnemy("skull", entity.x + 13, entity.y + 15, "left", world)
-    addTimer(0.15, "spawnSkull2", entity.timers)
-  elseif updateTimer(dt, "spawnSkull2", entity.timers) and checkTimer("spawnSkull3", entity.timers) == false then
-    addEnemy("skull", entity.x + 13, entity.y + 15, "right", world)
-    addTimer(0.15, "spawnSkull3", entity.timers)
-  elseif updateTimer(dt, "spawnSkull3", entity.timers) and checkTimer("spawnSkull4", entity.timers) == false then
-    addEnemy("skull", entity.x + 13, entity.y + 15, "left", world)
-    addTimer(0.15, "spawnSkull4", entity.timers)
-  elseif updateTimer(dt, "spawnSkull4", entity.timers) and checkTimer("spawnSkull5", entity.timers) == false then
-    addEnemy("skull", entity.x + 13, entity.y + 15, "right", world)
-    addTimer(0.15, "spawnSkull5", entity.timers)
-  elseif updateTimer(dt, "spawnSkull5", entity.timers) and entity.curAnim == 6 then
-    entity.curAnim = 2
-    addTimer(1.0, "idle", entity.timers)
-  end
-
-  if checkTimer("idle", entity.timers) then
-    if entity.direction == "right" then
-      entity.dx = math.max(ogreHead.x - entity.x - 120 / entity.uniqueStorage) * (4 + entity.uniqueStorage) * dt
-    else
-      entity.dx = math.max(ogreHead.x - entity.x + 120 / entity.uniqueStorage) * (4 + entity.uniqueStorage) * dt
-    end
-  elseif checkTimer("reset", entity.timers) then
-    if entity.direction == "right" then
-      entity.dx = math.max(ogreHead.x - entity.x - 120) * 4 * dt
-    else
-      entity.dx = math.max(ogreHead.x - entity.x + 120) * 4 * dt
-    end
-
-    if updateTimer(dt, "reset", entity.timers) then
+    if checkTimer("spawn", entity.timers) == false then
+      addTimer(0.6, "spawn", entity.timers)
+      entity.uniqueStorage = 1
+    elseif updateTimer(dt, "spawn", entity.timers) and checkTimer("spawnSkull", entity.timers) == false then
+      if entity.type ~= "enemy" then entity.type = "enemy" end
       entity.dx = 0
 
-      entity.animations[2]:gotoFrame(1)
-      entity.animations[2]:resume()
-
-      entity.animations[5]:gotoFrame(1)
-      entity.animations[5]:resume()
-      entity.curAnim = 5
-
-
-      entity.animations[6]:gotoFrame(1)
-      entity.animations[6]:resume()
-
-      entity.timers = {}
+      addTimer(0.15, "spawnSkull", entity.timers)
+    elseif updateTimer(dt, "spawnSkull", entity.timers) and checkTimer("spawnSkull2", entity.timers) == false then
+      entity.curAnim = 6
+      addEnemy("skull", entity.x + 13, entity.y + 15, "left", world)
+      addTimer(0.15, "spawnSkull2", entity.timers)
+    elseif updateTimer(dt, "spawnSkull2", entity.timers) and checkTimer("spawnSkull3", entity.timers) == false then
+      addEnemy("skull", entity.x + 13, entity.y + 15, "right", world)
+      addTimer(0.15, "spawnSkull3", entity.timers)
+    elseif updateTimer(dt, "spawnSkull3", entity.timers) and checkTimer("spawnSkull4", entity.timers) == false then
+      addEnemy("skull", entity.x + 13, entity.y + 15, "left", world)
+      addTimer(0.15, "spawnSkull4", entity.timers)
+    elseif updateTimer(dt, "spawnSkull4", entity.timers) and checkTimer("spawnSkull5", entity.timers) == false then
+      addEnemy("skull", entity.x + 13, entity.y + 15, "right", world)
+      addTimer(0.15, "spawnSkull5", entity.timers)
+    elseif updateTimer(dt, "spawnSkull5", entity.timers) and entity.curAnim == 6 then
+      entity.curAnim = 2
+      addTimer(1.0, "idle", entity.timers)
     end
-  end
 
-  if updateTimer(dt, "idle", entity.timers) and checkTimer("crush", entity.timers) == false then
-    entity.dx = 0
-    addTimer(0.2, "crush", entity.timers)
-    deleteTimer("idle", entity.timers)
-  elseif updateTimer(dt, "crush", entity.timers) == false and checkTimer("crush", entity.timers) then
-    entity.dy = (30 - entity.y) * 4 * dt
-  elseif updateTimer(dt, "crush", entity.timers) and checkTimer("idle", entity.timers) == false then
-    entity.curAnim = 3
-    entity.dy = entity.dy + 30 * dt
-  elseif updateTimer(dt, "slam", entity.timers) and checkTimer("crush", entity.timers) == false and checkTimer("rise", entity.timers) == false then
-    deleteTimer("slam", entity.timers)
-    addTimer(0.5, "rise", entity.timers)
-  elseif checkTimer("rise", entity.timers) and checkTimer("slam", entity.timers) == false and updateTimer(dt, "rise", entity.timers) == false then
-    entity.dy = (30 - entity.y) * 4 * dt
-  elseif updateTimer(dt, "rise", entity.timers) then
-    entity.dy = 0
-    entity.uniqueStorage = entity.uniqueStorage + 1
+    if checkTimer("idle", entity.timers) then
+      if entity.direction == "right" then
+        entity.dx = math.max(ogreHead.x - entity.x - 120 / entity.uniqueStorage) * (4 + entity.uniqueStorage) * dt
+      else
+        entity.dx = math.max(ogreHead.x - entity.x + 120 / entity.uniqueStorage) * (4 + entity.uniqueStorage) * dt
+      end
+    elseif checkTimer("reset", entity.timers) then
+      if entity.direction == "right" then
+        entity.dx = math.max(ogreHead.x - entity.x - 120) * 4 * dt
+      else
+        entity.dx = math.max(ogreHead.x - entity.x + 120) * 4 * dt
+      end
 
-    entity.animations[3]:gotoFrame(1)
-    entity.animations[3]:resume()
+      if updateTimer(dt, "reset", entity.timers) then
+        entity.dx = 0
 
-    deleteTimer("rise", entity.timers)
+        entity.animations[2]:gotoFrame(1)
+        entity.animations[2]:resume()
 
-    if entity.uniqueStorage > 2 then
-      addTimer(0.5, "reset", entity.timers)
-    else
-      addTimer(0.3, "idle", entity.timers)
+        entity.animations[5]:gotoFrame(1)
+        entity.animations[5]:resume()
+        entity.curAnim = 5
+
+
+        entity.animations[6]:gotoFrame(1)
+        entity.animations[6]:resume()
+
+        entity.timers = {}
+      end
     end
+
+    if updateTimer(dt, "idle", entity.timers) and checkTimer("crush", entity.timers) == false then
+      entity.dx = 0
+      addTimer(0.2, "crush", entity.timers)
+      deleteTimer("idle", entity.timers)
+    elseif updateTimer(dt, "crush", entity.timers) == false and checkTimer("crush", entity.timers) then
+      entity.dy = (30 - entity.y) * 4 * dt
+    elseif updateTimer(dt, "crush", entity.timers) and checkTimer("idle", entity.timers) == false then
+      entity.curAnim = 3
+      entity.dy = entity.dy + 30 * dt
+    elseif updateTimer(dt, "slam", entity.timers) and checkTimer("crush", entity.timers) == false and checkTimer("rise", entity.timers) == false then
+      deleteTimer("slam", entity.timers)
+      addTimer(0.5, "rise", entity.timers)
+    elseif checkTimer("rise", entity.timers) and checkTimer("slam", entity.timers) == false and updateTimer(dt, "rise", entity.timers) == false then
+      entity.dy = (30 - entity.y) * 4 * dt
+    elseif updateTimer(dt, "rise", entity.timers) then
+      entity.dy = 0
+      entity.uniqueStorage = entity.uniqueStorage + 1
+
+      entity.animations[3]:gotoFrame(1)
+      entity.animations[3]:resume()
+
+      deleteTimer("rise", entity.timers)
+
+      if entity.uniqueStorage > 2 then
+        addTimer(0.5, "reset", entity.timers)
+      else
+        addTimer(0.3, "idle", entity.timers)
+      end
+    end
+
   end
 
   if updateTimer(dt, "shake", entity.timers) then
@@ -1066,11 +1094,25 @@ local function ogreHandLeftBehaviour(dt, entity, world)
     camera:move(shake, shake)
   end
 
+  if ogreHead.alive == false then
+    entity.isDead = true
+  end
+
   if entity.isDead == false and checkTimer("idle", entity.timers) then
     entity.dy = 0.025 * math.sin(love.timer.getTime() * 0.5 * math.pi)
   end
 
-  if entity.isDead then
+  if entity.isDead and checkTimer("dead", entity.timers) == false then
+    entity.type = "dead"
+    addTimer(1.2, "dead", entity.timers)
+    addTimer(0.6, "shake", entity.timers)
+    entity.dx = 0
+    entity.dy = 0
+    entity.curAnim = 7
+    entity.gravity = 2
+  end
+
+  if updateTimer(dt, "dead", entity.timers) then
     entity.playDead = true
   end
 
@@ -1511,7 +1553,7 @@ local dictionary = {
 
   {
     name = "wall",
-    hp = 100,
+    hp = 10,
     w = 58,
     h = 192,
     update = wallBehaviour,
@@ -1905,7 +1947,7 @@ local dictionary = {
   {
     name = "ogre",
     type = "notEnemy",
-    hp = 100,
+    hp = 3,
     w = 56,
     h = 54,
     update = ogreBehaviour,
@@ -1931,10 +1973,10 @@ local dictionary = {
   {
     name = "ogreHandLeft",
     type = "notEnemy",
-    hp = 50,
+    hp = 20,
     w = 42,
     h = 32,
-    update = ogreHandLeftBehaviour,
+    update = ogreHandBehaviour,
     specialDraw = nil,
     scale = {x = 0.75, y = 0.75, offX = 20, offY = 23},
     worldOffSet = {offX = 0, offY = 0},
@@ -1949,6 +1991,7 @@ local dictionary = {
         anim8.newAnimation(grid("2-3", 6, "1-2", 7), 0.1, "pauseAtEnd"), -- 4 slam
         anim8.newAnimation(grid(2, 1, 2, 9), 0.2, "pauseAtEnd"), -- 5 fist to hand
         anim8.newAnimation(grid("1-2", 10, 1, 10, 2, 9), {0.1, 0.2, 0.1, 0.1}, "pauseAtEnd"), -- 6 spawn enemies
+        anim8.newAnimation(grid("1-3", "11-14"), 0.1, "pauseAtEnd"), -- 7 dying
       }
       return animations
     end,
@@ -1983,10 +2026,10 @@ local dictionary = {
   {
     name = "ogreHandRight",
     type = "notEnemy",
-    hp = 50,
+    hp = 20,
     w = 42,
     h = 32,
-    update = ogreHandLeftBehaviour,
+    update = ogreHandBehaviour,
     specialDraw = nil,
     scale = {x = 0.75, y = 0.75, offX = 20, offY = 23},
     worldOffSet = {offX = 0, offY = 0},
@@ -2001,6 +2044,7 @@ local dictionary = {
         anim8.newAnimation(grid("2-3", 6, "1-2", 7), 0.1, "pauseAtEnd"), -- 4 slam
         anim8.newAnimation(grid(2, 1, 2, 9), 0.2, "pauseAtEnd"), -- 5 fist to hand
         anim8.newAnimation(grid("1-2", 10, 1, 10, 2, 9), {0.1, 0.2, 0.1, 0.1}, "pauseAtEnd"), -- 6 spawn enemies
+        anim8.newAnimation(grid("1-3", "11-14"), 0.1, "pauseAtEnd"), -- 7 dying
       }
       return animations
     end,

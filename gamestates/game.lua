@@ -33,8 +33,8 @@ game = {}
 endLevel = false
 
 gameTimer = {
-  time = 117, -- 117
-  lastEvent = 117 -- 117
+  time = 0, -- 117
+  lastEvent = 0 -- 117
 }
 
 -- Camera boundaries
@@ -54,6 +54,13 @@ local gui = {
   livesGrid = nil,
   livesAnimations = nil,
   livesCurAnim = 1,
+  upgradeBar = {
+    x = 8,
+    y = 22,
+    w = 47,
+    h = 5,
+    color = {200, 200, 200, 255}
+  },
 }
 
 local leftWall = {
@@ -225,7 +232,7 @@ function game:timerEvents()
     addEnemy("triangle", 200, 15, "right", world)
     gameTimer.lastEvent = 103
   elseif gameTimer.time >= 120 and gameTimer.lastEvent < 120 then
-    addEnemy("ogre", 200, 20, "right", world)
+    addEnemy("ogre", 300, 20, "right", world)
     gameTimer.lastEvent = 120
   end
 end
@@ -318,13 +325,19 @@ function game:draw()
     drawBullets()
     drawBubbles()
 
-    --drawZones()
-
-    -- draw leftWall
-    -- love.graphics.rectangle("line", leftWall.x, leftWall.y, leftWall.w, leftWall.h)
   camera:detach()
 
   -- draw gui
+
+  love.graphics.setLineWidth(0.5)
+  love.graphics.setColor(gui.upgradeBar.color)
+  love.graphics.rectangle("fill", gui.upgradeBar.x, gui.upgradeBar.y, (player.xp / player.xpReq) * gui.upgradeBar.w, gui.upgradeBar.h)
+
+  love.graphics.setColor({255,255,255,255})
+  love.graphics.rectangle("line", gui.upgradeBar.x, gui.upgradeBar.y, gui.upgradeBar.w, gui.upgradeBar.h)
+  love.graphics.setLineWidth(1)
+
+
   setColor({255, 255, 255, 180}) -- set transparency
 
   for i = 0, player.lives - 1 do
@@ -335,7 +348,7 @@ function game:draw()
   setColor({255, 255, 255, 255})
 
   love.graphics.print(tostring(love.timer.getFPS( )), 0.2, 0.2, 0, 0.35, 0.35) -- print fps in the top left corner of the screen
-  love.graphics.print(tostring(player.xp) .. " " .. tostring(player.shootTimerMax), 0.2, 20, 0, 0.35, 0.35)
+  love.graphics.print(tostring(player.xp) .. " " .. tostring(player.shootTimerMax), 0.2, 28, 0, 0.35, 0.35)
 
   local minute = math.floor(gameTimer.time / 59)
   local seconds = gameTimer.time % 59

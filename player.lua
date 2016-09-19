@@ -34,6 +34,7 @@ local player = {
   bulletsMax = 4,
   upgrade = nil,
   xp = 0,
+  xpReq = 20,
   filter = function(item, other)
     if other.type == "enemy" then
       return 'cross'
@@ -99,8 +100,6 @@ local proneRect = {
 local playerSounds = {
   shoot = nil
 }
-
-local xpReq = 20
 
 respawnTimer = 0
 respawnTimerMax = 2.0 -- 4 seconds
@@ -384,11 +383,11 @@ function updatePlayer(dt, world) -- Update Player Movement [http://2dengine.com/
 
   --------- SHOOTING ---------
 
-  if player.xp >= xpReq and xpReq == 20 then
+  if player.xp >= player.xpReq and player.xpReq == 20 then
     player.shootTimerMax = player.shootTimerMax - 0.05
     player.bulletsMax = player.bulletsMax + 1
-    player.xp = player.xp - xpReq
-    xpReq = xpReq + 30
+    player.xp = player.xp - player.xpReq
+    player.xpReq = player.xpReq + 30
   end
 
   -- decrement shootTimer and animTimer--
