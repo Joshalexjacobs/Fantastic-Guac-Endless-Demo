@@ -952,7 +952,9 @@ end
 local ogreHead = {
   x = 0,
   y = 0,
-  status = "alive"
+  status = "alive",
+  rightHand = true,
+  leftHand = true
 }
 
 -- OGRE --
@@ -961,14 +963,15 @@ local function ogreBehaviour(dt, entity, world)
     addTimer(2.0, "spawn", entity.timers)
   elseif updateTimer(dt, "spawn", entity.timers) and entity.curAnim == 1 then
     entity.curAnim = 2
-    entity.type = "enemy"
 
     addTimer(0.0, "follow", entity.timers)
     addTimer(0.4, "spawnHand1", entity.timers)
   end
 
-  if checkTimer("follow", entity.timers) then
+  if checkTimer("follow", entity.timers) and entity.isDead == false then
     entity.dx = math.max(player.x - (entity.x + entity.w / 2)) * 1 * dt
+    ogreHead.x = entity.x
+    entity.dy = 0.05 * math.sin(love.timer.getTime() * 1 * math.pi)
   end
 
   if updateTimer(dt, "spawnHand1", entity.timers) then
@@ -980,9 +983,71 @@ local function ogreBehaviour(dt, entity, world)
     deleteTimer("spawnHand2", entity.timers)
   end
 
-  if entity.isDead == false then
-    ogreHead.x = entity.x
-    entity.dy = 0.05 * math.sin(love.timer.getTime() * 1 * math.pi)
+  if ogreHead.rightHand == false and ogreHead.leftHand == false and checkTimer("in pain", entity.timers) == false then
+    entity.dx = 0
+    entity.dy = 0
+    deleteTimer("follow", entity.timers)
+    addTimer(1.2, "in pain", entity.timers)
+    entity.curAnim = 3
+  end
+
+  if updateTimer(dt, "in pain", entity.timers) and checkTimer("rise", entity.timers) == false then
+    entity.curAnim = 2
+    if entity.type ~= "enemy" then entity.type = "enemy" end
+    addTimer(0.5, "rise", entity.timers)
+  end
+
+  if checkTimer("rise", entity.timers) and updateTimer(dt, "rise", entity.timers) == false then
+    entity.dy = math.max(ogreHead.y - 20) * 4 * dt
+  elseif updateTimer(dt, "rise", entity.timers) and checkTimer("smash", entity.timers) == false then
+    entity.curAnim = 4
+    addTimer(0.0, "smash", entity.timers)
+  end
+
+  if checkTimer("smash", entity.timers) and checkTimer("hit", entity.timers) == false then
+    entity.dy = entity.dy + 50 * dt
+  end
+
+  if checkTimer("hit", entity.timers) and checkTimer("rise2", entity.timers) == false then
+    entity.curAnim = 5
+    addTimer(0.3, "rise2", entity.timers)
+  end
+
+  if updateTimer(dt, "rise2", entity.timers) and checkTimer("rise3", entity.timers) == false then
+    addTimer(1.0, "rise3", entity.timers)
+  end
+
+  if checkTimer("rise3", entity.timers) then
+    entity.dy = math.max(ogreHead.y - 20) * 4 * dt
+    entity.dx = math.max(player.x - (entity.x + entity.w / 2)) * 1 * dt
+  end
+
+  if updateTimer(dt, "rise3", entity.timers) then
+    deleteTimer("rise", entity.timers)
+    deleteTimer("smash", entity.timers)
+    deleteTimer("hit", entity.timers)
+    deleteTimer("rise2", entity.timers)
+    deleteTimer("rise3", entity.timers)
+
+    entity.animations[4]:gotoFrame(1)
+    entity.animations[4]:resume()
+
+    entity.animations[5]:gotoFrame(1)
+    entity.animations[5]:resume()
+    entity.curAnim = 2
+  end
+
+  if updateTimer(dt, "shake", entity.timers) then
+    addTimer(0.05, "second shake", entity.timers)
+    deleteTimer("shake", entity.timers)
+    local shake = love.math.random(5, 10) * 0.5
+    if shake == 0 then shake = 1 end
+    camera:move(shake, shake)
+  elseif updateTimer(dt, "second shake", entity.timers) then
+    deleteTimer("second shake", entity.timers)
+    local shake = love.math.random(3, 5) * 0.5
+    if shake == 0 then shake = 1 end
+    camera:move(-shake, -shake)
   end
 
   if entity.isDead then
@@ -997,7 +1062,6 @@ end
 -- OGRE HAND --
 local function ogreHandBehaviour(dt, entity, world)
   if entity.isDead == false then
-
     if checkTimer("spawn", entity.timers) == false then
       addTimer(0.6, "spawn", entity.timers)
       entity.uniqueStorage = 1
@@ -1084,14 +1148,19 @@ local function ogreHandBehaviour(dt, entity, world)
         addTimer(0.3, "idle", entity.timers)
       end
     end
-
   end
 
   if updateTimer(dt, "shake", entity.timers) then
+    addTimer(0.05, "second shake", entity.timers)
     deleteTimer("shake", entity.timers)
-    local shake = love.math.random(-5, 5) * 0.5
+    local shake = love.math.random(5, 10) * 0.5
     if shake == 0 then shake = 1 end
     camera:move(shake, shake)
+  elseif updateTimer(dt, "second shake", entity.timers) then
+    deleteTimer("second shake", entity.timers)
+    local shake = love.math.random(3, 5) * 0.5
+    if shake == 0 then shake = 1 end
+    camera:move(-shake, -shake)
   end
 
   if ogreHead.alive == false then
@@ -1103,9 +1172,15 @@ local function ogreHandBehaviour(dt, entity, world)
   end
 
   if entity.isDead and checkTimer("dead", entity.timers) == false then
+    if entity.direction == "right" then ogreHead.leftHand = false else ogreHead.rightHand = false end
+
     entity.type = "dead"
     addTimer(1.2, "dead", entity.timers)
-    addTimer(0.6, "shake", entity.timers)
+
+    local shake = love.math.random(-5, 5) * 0.5
+    if shake == 0 then shake = 1 end
+    camera:move(shake, shake)
+
     entity.dx = 0
     entity.dy = 0
     entity.curAnim = 7
@@ -1955,25 +2030,46 @@ local dictionary = {
     scale = {x = 1, y = 1, offX = 20, offY = 23},
     worldOffSet = {offX = 0, offY = 0},
     sprite = "img/enemies/ogre/ogreBIG.png",
-    grid = {x = 96, y = 96, w = 288, h = 576},
+    grid = {x = 96, y = 96, w = 288, h = 960},
     shootPoint = {x = 0, y = 0},
     animations = function(grid)
       animations = {
         anim8.newAnimation(grid("1-3", "1-2", "1-2", 3, "2-1", 3, "3-2", 2, 3, 3, "1-3", 4),
                                 {0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.2, 0.2, 0.2, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1}, "pauseAtEnd"), -- 1 spawning
         anim8.newAnimation(grid("1-3", 6, 2, 6, "1-3", 6, 2, 6), {love.math.random(5, 10) * 0.2, 0.05, 0.05, 0.05, love.math.random(1, 10) * 0.2, 0.05, 0.05, 0.05}), -- 2 blinking
+        anim8.newAnimation(grid("1-3", "7-8", "3-1", "8-7"), 0.1, "pauseAtEnd"), -- 3 in pain
+        anim8.newAnimation(grid(1, 9), 0.1, "pauseAtEnd"), -- 4 falling
+        anim8.newAnimation(grid("2-3", 9, "1-3", 10), 0.1, "pauseAtEnd"), -- 5 smash
       }
       return animations
     end,
-    filter = nil,
-    collision = nil,
+    filter = function(item, other) -- default enemy filter
+      if other.type == "player" then
+        return 'cross'
+      elseif other.type == "block" or other.type == "ground" or other.type == "enemyPlatform" then
+        return 'slide'
+      end
+    end,
+    collision = function(cols, len, entity, world)
+      for i = 1, len do
+        if cols[i].other.type == "player" and entity.isDead == false then
+          cols[i].other.killPlayer(world)
+          print(entity.name)
+        elseif cols[i].other.type == "ground" and entity.isDead == false and entity.curAnim ~= 5 then
+          if checkTimer("hit", entity.timers) == false then
+            addTimer(0.0, "hit", entity.timers)
+            addTimer(0.0, "shake", entity.timers)
+          end
+        end
+      end
+    end,
     gravity = 0
   },
 
   {
     name = "ogreHandLeft",
     type = "notEnemy",
-    hp = 20,
+    hp = 2,
     w = 42,
     h = 32,
     update = ogreHandBehaviour,
@@ -2026,7 +2122,7 @@ local dictionary = {
   {
     name = "ogreHandRight",
     type = "notEnemy",
-    hp = 20,
+    hp = 2,
     w = 42,
     h = 32,
     update = ogreHandBehaviour,

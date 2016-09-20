@@ -33,8 +33,8 @@ game = {}
 endLevel = false
 
 gameTimer = {
-  time = 0, -- 117
-  lastEvent = 0 -- 117
+  time = 117, -- 117
+  lastEvent = 117 -- 117
 }
 
 -- Camera boundaries
